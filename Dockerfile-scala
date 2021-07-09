@@ -1,0 +1,68 @@
+FROM ubuntu:18.04
+
+RUN apt-get update && apt-get -y install apt-utils gcc wget 
+
+RUN apt install -y openjdk-8-jdk
+
+RUN apt-get install -y build-essential checkinstall cmake pkg-config git libgtk2.0-dev libtbb-dev libmp3lame-dev libtheora-dev libvorbis-dev libxvidcore-dev libopencore-amrnb-dev libopencore-amrwb-dev x264 v4l-utils libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libx264-dev libatlas-base-dev gfortran make tesseract-ocr-eng zlib1g-dev autoconf automake libtool
+
+RUN  apt-get update && apt-get install -y python-dev python-numpy \
+  python3 python3-pip python3-dev python-pycurl libjpeg-dev libpng-dev libtiff-dev
+
+RUN pip3 install --upgrade pip
+
+RUN pip install numpy
+
+
+
+RUN CHECK_OUT_TAG=3.4.3
+ENV CHECK_OUT_TAG=${CHECK_OUT_TAG}
+
+RUN BUILD_TYPE=Release
+RUN BUILD_TYPE=${BUILD_TYPE}
+
+RUN CMAKE_PREFIX=/usr/local
+RUN CMAKE_PREFIX=${CMAKE_PREFIX}
+
+RUN TESSDATA_PREFIX=/usr/local/share/tessdata
+
+RUN cd /opt/
+
+RUN git clone https://github.com/opencv/opencv.git && \
+    cd opencv  && \
+    git checkout tags/3.4.3 -b 3.4.3  && \
+    cd .. && \
+    git clone https://github.com/opencv/opencv_contrib.git && \
+    cd opencv_contrib && \
+    git checkout tags/3.4.3 -b 3.4.3 && \
+    cd .. && \
+    cd opencv && \
+    mkdir build && \
+    cd build && \
+    cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX="/usr/local" -D OPENCV_EXTRA_MODULES_PATH="../../opencv_contrib/modules" .. && \
+    make && \
+    make install && \
+    make clean && \
+    sh -c 'echo "/usr/local/lib" >> /etc/ld.so.conf.d/opencv.conf' && \
+    ldconfig
+
+RUN cd /opt/
+
+RUN wget http://www.leptonica.org/source/leptonica-1.74.4.tar.gz && \
+    tar xvf leptonica-1.74.4.tar.gz && \
+    cd leptonica-1.74.4 && \
+    ./configure && \
+    make && \
+    make install && \
+    make clean 
+
+RUN cd /opt/
+
+RUN git clone https://github.com/tesseract-ocr/tesseract.git --branch 4.0.0 --single-branch && \
+    cd tesseract && \
+    ./autogen.sh && \
+    ./configure --enable-debug && \
+    make && \
+    make install && \
+    make clean && \
+    ldconfig
